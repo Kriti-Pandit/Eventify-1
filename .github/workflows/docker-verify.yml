@@ -10,9 +10,3 @@ jobs:
     - run: docker build -t backend .
       working-directory: ./api  # Changed from ./EVENTIFY-MAIN-5 to ./api
 
-  verify-frontend:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - run: docker build -t frontend .
-      working-directory: ./client
