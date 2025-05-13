@@ -1,26 +1,28 @@
 const request = require('supertest');
-const app = require('../index');
 const mongoose = require('mongoose');
+const { app, server } = require('../index'); // Destructure the exports
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
+// Use a test-specific port
+process.env.PORT = 0;
+
 describe('User Authentication API', () => {
   beforeAll(async () => {
-    // Increase timeout for MongoDB connection
-    jest.setTimeout(30000);
     await mongoose.connect(process.env.MONGO_URI);
   });
 
   afterEach(async () => {
-    await User.deleteMany({});
+    await User.deleteMany({}); // Cleanup users after each test
   });
 
   afterAll(async () => {
     await mongoose.disconnect();
+    await server.close(); // Shut down the server
   });
 
   describe('POST /register', () => {
-    it('should register a new user with valid data', async () => {
+    it('should register a new user', async () => {
       const res = await request(app)
         .post('/register')
         .send({
@@ -34,13 +36,10 @@ describe('User Authentication API', () => {
       expect(res.body.email).toBe('test@example.com');
     });
 
-    it('should return 400 for missing required fields', async () => {
+    it('should fail with missing fields', async () => {
       const res = await request(app)
         .post('/register')
-        .send({
-          name: 'Incomplete User'
-          // Missing email and password
-        });
+        .send({ name: 'Incomplete User' });
       
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('All fields are required');
@@ -55,13 +54,14 @@ describe('User Authentication API', () => {
     };
 
     beforeEach(async () => {
+      // Pre-create a user for login tests
       await User.create({
         ...testUser,
         password: bcrypt.hashSync(testUser.password, 10)
       });
     });
 
-    it('should return JWT token with valid credentials', async () => {
+    it('should login with valid credentials', async () => {
       const res = await request(app)
         .post('/login')
         .send({
@@ -71,10 +71,10 @@ describe('User Authentication API', () => {
       
       expect(res.status).toBe(200);
       expect(res.body.email).toBe(testUser.email);
-      expect(res.headers['set-cookie']).toBeDefined();
+      expect(res.headers['set-cookie']).toBeDefined(); // Check for JWT cookie
     });
 
-    it('should return 401 for invalid credentials', async () => {
+    it('should reject invalid password', async () => {
       const res = await request(app)
         .post('/login')
         .send({
