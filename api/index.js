@@ -438,5 +438,6 @@ if (process.env.NODE_ENV !== 'test') {
 module.exports = {
   app,
   startServer,
-  stopServer
+  stopServer,
+  Event: mongoose.model('Event')
 };
