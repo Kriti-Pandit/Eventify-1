@@ -1,22 +1,24 @@
-name: Node.js CI with MongoDB Atlas
-
+name: CI Pipeline
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  test:
+  test-api:
+    name: Test API
     runs-on: ubuntu-latest
-
+    
+    defaults:
+      run:
+        working-directory: ./api
+    
     steps:
     - uses: actions/checkout@v3
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
+    - uses: actions/setup-node@v3
       with:
-        node-version: '18'
+        node-version: 18
         cache: 'npm'
     
     - name: Install dependencies
@@ -26,6 +28,26 @@ jobs:
       env:
         MONGO_URI: ${{ secrets.MONGODB_ATLAS_URI_TEST }}
         JWT_SECRET: 'test-secret-123'
-        PORT: 4000
-        NODE_ENV: 'test'
       run: npm test
+
+  test-client:
+    name: Test Client
+    runs-on: ubuntu-latest
+    needs: test-api
+    
+    defaults:
+      run:
+        working-directory: ./client
+    
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm install
+    
+    - name: Build project
+      run: npm run build
