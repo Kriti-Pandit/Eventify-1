@@ -1,8 +1,7 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const { app, startServer, stopServer } = require('../index');
+const { app, startServer, stopServer, Event } = require('../index');
 const User = require('../models/User');
-const Event = require('../models/Event');
 const Ticket = require('../models/Ticket');
 const bcrypt = require('bcryptjs');
 
@@ -16,7 +15,7 @@ describe('Ticket API', () => {
   });
 
   beforeEach(async () => {
-    // Create a test user
+    // Create test user
     testUser = await User.create({
       name: 'Ticket Test User',
       email: 'ticketuser@test.com',
@@ -32,7 +31,7 @@ describe('Ticket API', () => {
       });
     authToken = loginRes.headers['set-cookie'][0].split(';')[0].split('=')[1];
 
-    // Create a test event
+    // Create test event
     testEvent = await Event.create({
       owner: testUser._id,
       title: 'Test Event',
@@ -84,7 +83,7 @@ describe('Ticket API', () => {
         .set('Cookie', [`token=${authToken}`])
         .send({
           eventId: testEvent._id,
-          quantity: 51 // Only 50 available
+          quantity: 51
         });
 
       expect(res.status).toBe(400);
@@ -220,7 +219,7 @@ describe('Ticket API', () => {
 
       // Verify event counts were updated
       const updatedEvent = await Event.findById(testEvent._id);
-      expect(updatedEvent.availableTickets).toBe(50); // Original 50 - 2 + 2
+      expect(updatedEvent.availableTickets).toBe(50);
       expect(updatedEvent.currentParticipants).toBe(0);
     });
 
