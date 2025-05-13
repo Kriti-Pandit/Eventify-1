@@ -199,33 +199,7 @@ app.get('/events/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch event' });
   }
 });
-/*
-// Update Event Route
-app.put('/events/:id', authenticate, async (req, res) => {
-  try {
-    const event = await Event.findById(req.params.id);
-    
-    if (!event) {
-      return res.status(404).json({ error: 'Event not found' });
-    }
 
-    if (event.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: 'Unauthorized to edit this event' });
-    }
-
-    const updatedEvent = await Event.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-
-    res.json(updatedEvent);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to update event' });
-  }
-});
-*/
-// In your index.js, update the PUT endpoint:
 app.put('/events/:id', authenticate, upload.single('image'), async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -240,7 +214,6 @@ app.put('/events/:id', authenticate, upload.single('image'), async (req, res) =>
 
     const updateData = {
       ...req.body,
-      // Only update image if a new one was uploaded
       ...(req.file && { image: req.file.path })
     };
 
@@ -255,7 +228,7 @@ app.put('/events/:id', authenticate, upload.single('image'), async (req, res) =>
     res.status(500).json({ error: 'Failed to update event' });
   }
 });
-// Get events created by the current user
+
 app.get('/my-events', authenticate, async (req, res) => {
   try {
     const events = await Event.find({ owner: req.user._id })
@@ -267,7 +240,6 @@ app.get('/my-events', authenticate, async (req, res) => {
   }
 });
 
-// Get event registrations (tickets) for an event
 app.get('/events/:id/registrations', authenticate, async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -275,7 +247,6 @@ app.get('/events/:id/registrations', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
 
-    // Verify the requesting user is the event owner
     if (event.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
@@ -288,7 +259,6 @@ app.get('/events/:id/registrations', authenticate, async (req, res) => {
   }
 });
 
-// Delete an event
 app.delete('/events/:id', authenticate, async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -297,15 +267,11 @@ app.delete('/events/:id', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
 
-    // Verify the requesting user is the event owner
     if (event.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'Unauthorized to delete this event' });
     }
 
-    // Delete all tickets for this event first
     await Ticket.deleteMany({ eventId: req.params.id });
-
-    // Then delete the event
     await Event.findByIdAndDelete(req.params.id);
 
     res.json({ message: 'Event deleted successfully' });
@@ -314,10 +280,9 @@ app.delete('/events/:id', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to delete event' });
   }
 });
-// Update User Profile
+
 app.put('/users/:id', authenticate, async (req, res) => {
   try {
-    // Verify the requesting user is updating their own profile
     if (req.params.id !== req.user._id.toString()) {
       return res.status(403).json({ error: 'Unauthorized to update this profile' });
     }
@@ -328,7 +293,6 @@ app.put('/users/:id', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Name and email are required' });
     }
 
-    // Check if email is being changed to one that already exists
     if (email !== req.user.email) {
       const existingUser = await User.findOne({ email });
       if (existingUser) {
@@ -440,13 +404,39 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Start server
+// Server management
+let server;
+
 const startServer = async () => {
-  await connectDB();
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  });
+  try {
+    await connectDB();
+    server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+    return server;
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
 };
 
-startServer();
+const stopServer = async () => {
+  if (server) {
+    await new Promise((resolve) => server.close(resolve));
+    await mongoose.disconnect();
+    console.log('Server stopped');
+  }
+};
+
+// Start the server if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
+
+// Export for testing
+module.exports = {
+  app,
+  startServer,
+  stopServer
+};
