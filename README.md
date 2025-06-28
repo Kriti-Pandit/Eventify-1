@@ -4,11 +4,22 @@ Introducing our Event Management System designed to streamline campus event plan
 
 **Skills:** *Figma · Ui/ux · React.js · MongoDB · Node.js · Express.js · Requirements Analysis · User Interface Design*
 
+## Eventify: Manage, Register, Connect
+
+![Banner](./assets/s2.png)
+
+Introducing our Event Management System designed to streamline campus event planning...
+
+![sign Up](./assets/s1.png)
+![Eventify](./assets/s3.png)
+![Eventify](./assets/s4.png)
+![Eventify](./assets/s5.png)
+
+
 **Features**
 * Schedule a Event.
 * View upcoming events.
 * View the event calendar.
-* Getting approval for the events.
 * Ticket Booking for the event.
 * QR Code generation for receiving tickets.
 
@@ -36,10 +47,10 @@ Introducing our Event Management System designed to streamline campus event plan
 4. Create a .env file in the root directory with the following content, and replace placeholders with your own values. <br>
      MONGODB_URI=mongodb://localhost/your-database-name
 5. Start the server.<br>
-     **ems/api:** nodemon start<br>
+     **/api:** nodemon start<br>
      if the command is not working use **PowerShell -ExecutionPolicy Bypass nodemon** this command.
 7. Start the Client:<br>
-      **ems/client:** npm run dev
+      **/client:** npm run dev
 
 **The application should now be running. You can access it at http://localhost:5173**<br>
 **The Server is running on http://localhost:4000**
